@@ -21,7 +21,7 @@ I'm a Cyber Security student (HvA, Netherlands) learning the tools that crypto-e
 - **Look-alikes that should not alert:** a traveller, a user who forgot their password, an active trader, and an agent on a busy incident day.
 - **Labels:** the answers live in `tests/ground_truth.json`.
 
-`tests/run_detections.py` runs every detection against the data and reports what it caught, the false alarms and what it missed. GitHub Actions runs it on every push.
+`tests/run_detections.py` runs every detection against the data and reports what it caught, the false alarms and what it missed.
 
 ```
 python data/generate_exchange_logs.py
