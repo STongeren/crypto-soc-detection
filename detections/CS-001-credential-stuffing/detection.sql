@@ -1,0 +1,8 @@
+-- CS-001: Credential stuffing from one source
+-- Write a query against data/exchange.db.
+-- It must return one column named `entity` containing the user_id values you flag,
+-- one row per flagged user_id. Example of the shape:
+--
+--   SELECT DISTINCT user_id AS entity FROM events WHERE ...
+--
+-- Then run: python tests/run_detections.py

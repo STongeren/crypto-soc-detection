@@ -1,0 +1,39 @@
+{
+  "ATO": [
+    "U00005",
+    "U00918"
+  ],
+  "CRED_STUFFING": {
+    "ip": "192.0.66.239",
+    "compromised_users": [
+      "U00226",
+      "U00242",
+      "U00780"
+    ]
+  },
+  "INSIDER": [
+    "AG07"
+  ],
+  "ADDRESS_POISONING": [
+    "U00287",
+    "U00669"
+  ],
+  "BENIGN_LOOKALIKES": [
+    {
+      "user_id": "U00098",
+      "why": "traveller"
+    },
+    {
+      "user_id": "U00355",
+      "why": "forgot password"
+    },
+    {
+      "user_id": "U00885",
+      "why": "active trader"
+    },
+    {
+      "agent_id": "AG03",
+      "why": "busy incident day, every view has a ticket"
+    }
+  ]
+}
