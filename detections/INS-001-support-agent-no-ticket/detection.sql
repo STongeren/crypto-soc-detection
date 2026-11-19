@@ -1,0 +1,8 @@
+-- INS-001: Support agent opens accounts without a ticket
+-- Write a query against data/exchange.db.
+-- It must return one column named `entity` containing the agent_id values you flag,
+-- one row per flagged agent_id. Example of the shape:
+--
+--   SELECT DISTINCT user_id AS entity FROM events WHERE ...
+--
+-- Then run: python tests/run_detections.py
