@@ -41,18 +41,20 @@ SELECT * FROM events WHERE user_id = 'U00005';
 ```
 `WHERE` is een filter: je ziet alleen de regels van deze klant.
 
-**Jouw vraag:** er is nog een klant met precies hetzelfde patroon. Je vond hem net bij de sms-resets. Laat al zijn events zien. Vanuit welk land kwam de aanval?
+In het voorbeeld zie je klant `U00005`. Hij woont in België (`BE`), maar er staan ook regels uit Rusland (`RU`) in: daar kwam de aanval vandaan.
+
+**Jouw vraag:** klant `U00918` is ook gehackt. Laat alleen de kolom `country` van deze klant zien. Uit welk vreemd land kwam de aanval?
 
 <details><summary>Hint</summary>
 
-Het was de klant die niet `U00005` was. Verander alleen de `user_id`.
+Combineer opdracht 1 en het voorbeeld: kies de kolom `country` na `SELECT`, en verander de `user_id`.
 </details>
 <details><summary>Antwoord</summary>
 
 ```sql
-SELECT * FROM events WHERE user_id = 'U00918';
+SELECT country FROM events WHERE user_id = 'U00918';
 ```
-30 regels. De aanval kwam uit Vietnam (`VN`).
+Je ziet vooral `NL`: daar woont ze. Daartussen staat een paar keer `VN`, Vietnam. Daar kwam de aanval vandaan.
 </details>
 
 ### Opdracht 3: welke netwerken bestaan er
