@@ -613,3 +613,102 @@ Answer from memory first, then run to check.
 </details>
 
 You can now say honestly: "I can write KQL with filters, time windows, aggregations, thresholds and joins, and I turned one detection into a tested rule in both SQL and KQL."
+
+---
+
+## Day 6 (extra): what Sentinel queries use every day
+
+Optional. Do it when days 1 to 5 feel easy. These five show up in almost every real Sentinel or Defender query.
+
+### Exercise 19: count only some rows (`countif`)
+**New: `countif()`** counts only the rows where a condition is true, inside `summarize`:
+```kql
+StormEvents
+| summarize StormsWithCropDamage = countif(DamageCrops > 0) by State
+| top 5 by StormsWithCropDamage
+```
+`IOWA` is on top with 359. One `summarize` can now hold a total **and** a conditional count, like "logins" and "failed logins" per user.
+
+**Your question:** for each state, show all storms **and** the storms with crop damage. Top 5 by crop damage.
+
+<details><summary>Answer</summary>
+
+```kql
+StormEvents
+| summarize Total = count(), StormsWithCropDamage = countif(DamageCrops > 0) by State
+| top 5 by StormsWithCropDamage
+```
+`IOWA` 2337 storms, 359 with crop damage.
+</details>
+
+### Exercise 20: fields inside JSON
+Real logs often hide details in a JSON column. In Sentinel's `SigninLogs`, the location sits inside `LocationDetails`. `StormEvents` has one too, called `StormSummary`:
+```kql
+StormEvents
+| take 1
+| project StormSummary
+```
+You see something like `{"TotalDamages":0, ..., "Details":{"Description":"...","Location":"ATLANTIC SOUTH"}}`.
+
+**New: reading a field inside JSON.** Use dots to walk into it, and `tostring()` to turn it into normal text:
+```kql
+StormEvents
+| extend Location = tostring(StormSummary.Details.Location)
+| where Location == "ATLANTIC SOUTH"
+| count
+```
+193.
+
+**Your question:** how many storms have a `TotalDamages` (inside `StormSummary`) above 1,000,000? Numbers use `toreal()` instead of `tostring()`.
+
+<details><summary>Answer</summary>
+
+```kql
+StormEvents
+| where toreal(StormSummary.TotalDamages) > 1000000
+| count
+```
+658.
+</details>
+
+### Exercises 21 to 23: back to your exchange
+Paste the [practice table](week2-events.kql) above each of these.
+
+**Exercise 21: everything one customer did (`make_set`).** `make_set()` collects all the different values into one list:
+```kql
+Events
+| summarize Countries = make_set(country), Networks = make_set(network) by user_id
+```
+**Predict first:** which customer has more than one country?
+
+<details><summary>Answer</summary>
+
+`U00226`: `["NL","SG"]` and `["residential","hosting"]`. A customer suddenly using a server in Singapore next to their home network is exactly what an analyst looks for.
+</details>
+
+**Exercise 22: the latest event per customer (`arg_max`).** `arg_max(timestamp, *)` keeps, per group, the whole row with the highest `timestamp`:
+```kql
+Events
+| summarize arg_max(timestamp, *) by user_id
+| project user_id, timestamp, event_type
+```
+**Predict first:** what kind of event is everyone's latest?
+
+<details><summary>Answer</summary>
+
+A `withdrawal`, for all 7 customers. In a SOC you use `arg_max` for "the last sign-in per user" or "the latest status per device".
+</details>
+
+**Exercise 23: what's missing (`leftanti`).** `join kind=leftanti` keeps the rows on the left that have **no** match on the right. Like `LEFT JOIN ... IS NULL` in SQL:
+```kql
+Events
+| where event_type == "withdrawal"
+| join kind=leftanti (Events | where event_type == "password_reset") on user_id
+| distinct user_id
+```
+**Predict first:** which customers withdrew without ever resetting their password?
+
+<details><summary>Answer</summary>
+
+4: `U00287`, `U00098`, `U00669` and `U00226`. The other three (`U00005`, `U00918`, `U00355`) had a reset. Note that two of these four are attack victims too (poisoning and credential stuffing): a reset is a signal for SIM swap, not for every attack.
+</details>

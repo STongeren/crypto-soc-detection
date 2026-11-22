@@ -23,6 +23,8 @@ Keep this open next to DB Browser. You don't have to memorize anything: copy an 
 | sort, biggest first | `... ORDER BY amount_eur DESC;` | `ASC` = smallest first |
 | top 5 | `... ORDER BY amount_eur DESC LIMIT 5;` | `ORDER BY` comes before `LIMIT` |
 | add the customer's name | `SELECT e.timestamp, u.name FROM events e JOIN users u ON u.user_id = e.user_id;` | `e` and `u` are short names for the tables |
+| keep rows without a match (find what's missing) | `... FROM users u LEFT JOIN events e ON e.user_id = u.user_id AND e.event_type = 'deposit' WHERE e.user_id IS NULL;` | conditions about the right table go in `ON`, not `WHERE` |
+| label rows | `CASE WHEN amount_eur >= 1000 THEN 'big' ELSE 'normal' END AS size` | the first `WHEN` that is true wins |
 | give a column a new name | `SELECT user_id AS entity FROM events;` | the test looks for a column called `entity` |
 | minutes between two events | `(julianday(b.timestamp) - julianday(a.timestamp)) * 24 * 60` | `julianday` turns a date into a number of days |
 | a range | `... BETWEEN 0 AND 60` | from 0 up to and including 60 |

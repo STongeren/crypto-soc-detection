@@ -545,3 +545,66 @@ Answer from memory first, then run the query to check. Write your guess down bef
 </details>
 
 You can now say honestly: "I can filter, count, group, set thresholds and join log tables in SQL, and I built two tested detections."
+
+---
+
+## Day 6 (extra): two things interviewers like to ask
+
+Optional. Do it when days 1 to 5 feel easy.
+
+### Exercise 16: what's missing (LEFT JOIN)
+**New: `LEFT JOIN`.** A normal `JOIN` only keeps rows that have a match on both sides. `LEFT JOIN` keeps **every** row from the left table. Where there's no match, the right side is `NULL`. With `IS NULL` you then find what's **missing**: customers without a login, agents without a ticket, accounts without 2FA.
+
+This finds customers who never made a withdrawal:
+```sql
+SELECT COUNT(*)
+FROM users u
+LEFT JOIN events e
+  ON e.user_id = u.user_id
+ AND e.event_type = 'withdrawal'
+WHERE e.user_id IS NULL;
+```
+363 customers. The `event_type` condition sits in `ON`, not in `WHERE`: otherwise the missing rows (which are `NULL`) would be filtered away again.
+
+**Your question:** how many customers never made a deposit?
+
+<details><summary>Hint</summary>
+
+Same query, with `'deposit'` instead of `'withdrawal'`.
+</details>
+<details><summary>Answer</summary>
+
+419.
+</details>
+
+### Exercise 17: labels (CASE)
+**New: `CASE`** gives each row a label based on a rule, like an "if this, then that":
+```sql
+SELECT amount_eur,
+       CASE WHEN amount_eur >= 1000 THEN 'big' ELSE 'normal' END AS size
+FROM events
+WHERE event_type = 'withdrawal'
+LIMIT 10;
+```
+`AS size` names the new column. A SOC uses this to give alerts a severity.
+
+**Your question:** count the withdrawals per size, with three sizes: `large` (5000 or more), `medium` (1000 or more), and `small` (the rest). Biggest group first.
+
+<details><summary>Hint</summary>
+
+You can put more than one `WHEN` in a `CASE`. The first one that's true wins, so start with the biggest. Then `GROUP BY size`.
+</details>
+<details><summary>Answer</summary>
+
+```sql
+SELECT CASE WHEN amount_eur >= 5000 THEN 'large'
+            WHEN amount_eur >= 1000 THEN 'medium'
+            ELSE 'small' END AS size,
+       COUNT(*)
+FROM events
+WHERE event_type = 'withdrawal'
+GROUP BY size
+ORDER BY COUNT(*) DESC;
+```
+`small` 998, `medium` 156, `large` 17.
+</details>
