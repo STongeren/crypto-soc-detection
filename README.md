@@ -25,7 +25,7 @@ Want to learn this with me? **[Setup: everything you need](SETUP.md)** has the d
 - **Look-alikes that should not alert:** a traveller, a user who forgot their password, an active trader, and an agent on a busy incident day.
 - **Labels:** the answers live in `tests/ground_truth.json`.
 
-`tests/run_detections.py` runs every detection against the data and reports what it caught, the false alarms and what it missed.
+`tests/run_detections.py` runs every detection against the labelled data (`detection.sql` against `exchange.db`, `detection.py` against the JSON log) and reports what it caught, the false alarms and what it missed. KQL and SPL versions are tested by hand in Azure Data Explorer and Splunk.
 
 ```
 python data/generate_exchange_logs.py
