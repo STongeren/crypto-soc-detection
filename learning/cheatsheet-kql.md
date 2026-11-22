@@ -29,6 +29,11 @@ Keep this open next to the query window. Copy an example and change only what yo
 | several counts at once | `\| summarize Total = count(), Customers = dcount(user_id) by network` | two counts in `SELECT` |
 | count per time slot | `\| summarize count() by bin(timestamp, 1h)` | (no simple SQL version) |
 | a threshold ("more than N") | `\| summarize Total = count() by user_id \| where Total > 5` | `HAVING COUNT(*) > 5` |
+| count only some rows | `\| summarize Failed = countif(result == "failure") by user_id` | `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` |
+| all different values in a list | `\| summarize Countries = make_set(country) by user_id` | `GROUP_CONCAT(DISTINCT country)` |
+| the latest row per group | `\| summarize arg_max(timestamp, *) by user_id` | (needs a window function in SQL) |
+| a field inside JSON | `\| extend City = tostring(LocationDetails.city)` | (depends on the database) |
+| rows with no match | `\| join kind=leftanti (Other) on user_id` | `LEFT JOIN ... WHERE ... IS NULL` |
 | sort, biggest first | `\| sort by Total desc` | `ORDER BY Total DESC` |
 | top 5 | `\| top 5 by amount_eur` | `ORDER BY amount_eur DESC LIMIT 5` |
 | draw a line chart | `\| render timechart` | (not in SQL) |
