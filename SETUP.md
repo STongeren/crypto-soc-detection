@@ -9,7 +9,12 @@ You only need **two things to start**. The rest you download when you reach that
 ## Start here (week 1, 10 minutes)
 
 ### 1. Get this repo
-No Git needed: on the [repo page](https://github.com/STongeren/crypto-soc-detection), click the green **Code** button → **Download ZIP**, and unzip it somewhere you can find it.
+No Git needed:
+1. On the [repo page](https://github.com/STongeren/crypto-soc-detection), click the green **Code** button → **Download ZIP**.
+2. Unzip it:
+   - **Windows:** open your Downloads folder, right-click the ZIP → **Extract All** → **Extract**.
+   - **Mac:** open your Downloads folder and double-click the ZIP.
+3. You now have a folder called `crypto-soc-detection-main`. Move it somewhere you can find it, like your Documents folder.
 
 Know Git? Then:
 ```
@@ -17,7 +22,8 @@ git clone https://github.com/STongeren/crypto-soc-detection.git
 ```
 
 ### 2. Get the dataset
-Download **[exchange.db](https://github.com/STongeren/crypto-soc-detection/releases/latest/download/exchange.db)** (7 MB) and put it in the `data` folder of the repo.
+1. Download **[exchange.db](https://github.com/STongeren/crypto-soc-detection/releases/latest/download/exchange.db)** (7 MB). It lands in your Downloads folder.
+2. Drag `exchange.db` into the `data` folder inside `crypto-soc-detection-main`.
 
 This is a fake crypto exchange: 1,000 users, about 29,000 events over 45 days, with hidden attacks for you to find.
 
@@ -32,9 +38,13 @@ This is where you write your SQL queries.
 
 All versions: [sqlitebrowser.org/dl](https://sqlitebrowser.org/dl/)
 
+**Installing:**
+- **Windows:** double-click the `.msi` file and click **Next** until it's done. (The zip version: extract it, then double-click `DB Browser for SQLite.exe` inside.)
+- **Mac:** double-click the `.dmg` file and drag **DB Browser for SQLite** into the **Applications** folder.
+
 ### 4. Open the database
 1. Open DB Browser for SQLite.
-2. Click **Open Database** and pick `data/exchange.db`.
+2. Click **Open Database** and pick `exchange.db` in the `data` folder of `crypto-soc-detection-main`.
 3. Click the **Execute SQL** tab.
 4. Start with [week 1](learning/week1-sql.md). Keep the [cheat sheet](learning/cheatsheet.md) open next to it.
 
@@ -50,7 +60,7 @@ The test checks your detections automatically. It needs Python.
 | Mac | [python.org/downloads](https://www.python.org/downloads/), or `brew install python` with [Homebrew](https://brew.sh) | `python3 --version` |
 | Linux | Usually already installed | `python3 --version` |
 
-Run the test from the repo folder:
+Run the test from the repo folder. Open a terminal (Windows: Windows key → type `PowerShell` → Enter. Mac: Cmd + Space → type `Terminal` → Return), type `cd ` with a space, drag the `crypto-soc-detection-main` folder into the window, press Enter, then:
 
 | Windows | Mac / Linux |
 |---|---|
@@ -66,7 +76,7 @@ Download these when you get there.
 
 | Week | Tool | What you need | Windows | Mac | Linux |
 |---|---|---|---|---|---|
-| 2 | KQL | Nothing to install. A free Microsoft account | [Practice data in your browser](https://dataexplorer.azure.com/clusters/help/databases/Samples) | same | same |
+| 2 | KQL | Nothing to install. A free Microsoft account. Start with [week 2](learning/week2-kql.md) | [Practice environment in your browser](https://dataexplorer.azure.com/clusters/help/databases/Samples) | same | same |
 | 3 | Splunk | Splunk Enterprise (free account, 60-day trial, then a free license that never expires) | [Download](https://www.splunk.com/en_us/download/splunk-enterprise.html) | same page, macOS tab | same page, Linux tab |
 | 3 | Splunk | BOTSv3, a real attack dataset (320 MB) | [github.com/splunk/botsv3](https://github.com/splunk/botsv3) | same | same |
 | 4 | Python | Python (see above) | | | |

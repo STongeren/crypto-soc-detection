@@ -1,7 +1,7 @@
 # Week 1: SQL
 
 **How every exercise works:**
-1. **Example:** paste it into DB Browser (tab **Execute SQL**), press **Ctrl + Enter** and read what each part does.
+1. **Example:** paste it into DB Browser (tab **Execute SQL**) and run it: **Ctrl + Enter** on Windows, **Cmd + Return** on Mac, or click the ▶ button. Read what each part does. Delete the old query first: with several queries in the box, you only see the result of the last one.
 2. **Your question:** write the query yourself. Use [the cheat sheet](cheatsheet.md), that's not cheating.
 3. Stuck? Click **Hint**. Only when you have your own answer, click **Answer** to check.
 4. **Think question:** this is what a SOC analyst asks themselves. Think first, then click.
@@ -15,11 +15,17 @@ Some questions ask you to **predict first**. Just guess. A guess that turns out 
 ## Day 1: looking
 
 ### Exercise 1: the first rows
+A database table is like a spreadsheet: **rows** (one per event) and **columns** (like `user_id` or `country`). Our main table is called `events`.
+
 **Example:**
 ```sql
 SELECT * FROM events LIMIT 10;
 ```
-`*` means all columns. `LIMIT 10` means: only the first 10 rows.
+Read it as a sentence:
+- `SELECT *` = show all columns (`*` means "all" here)
+- `FROM events` = from the table `events`
+- `LIMIT 10` = only the first 10 rows
+- `;` = the end of the query
 
 Don't want all columns? Write their names instead of `*`, with a comma in between:
 ```sql
@@ -44,9 +50,9 @@ SELECT timestamp, user_id, event_type FROM events LIMIT 5;
 ```sql
 SELECT * FROM events WHERE user_id = 'U00005';
 ```
-`WHERE` is a filter: you only see the rows of this customer.
+`WHERE` is a filter: you only see the rows of this customer. Text values like `'U00005'` go between single quotes `' '`. Numbers don't.
 
-In the example you see customer `U00005`. He lives in Belgium (`BE`), but there are also rows from Russia (`RU`): that's where the attack came from.
+Look at the `country` column. His home country is Belgium (`BE`), and he also uses the exchange from the Netherlands (`NL`). The rows from Russia (`RU`) are the attack.
 
 **Your question:** customer `U00918` was hacked too. Show only the `country` column for this customer. Which unusual country did the attack come from?
 
@@ -150,6 +156,8 @@ SELECT event_type, COUNT(*) FROM events GROUP BY event_type;
 ```
 `GROUP BY` makes groups. `COUNT(*)` counts how many rows are in each group.
 
+Countries are two-letter codes. The ones you'll meet: `NL` Netherlands, `BE` Belgium, `DE` Germany, `FR` France, `ES` Spain, `RU` Russia, `VN` Vietnam, `SG` Singapore, `TH` Thailand.
+
 **Your question:** which countries do the events come from, and how often? Which countries are unusual for a Dutch exchange?
 
 <details><summary>Hint</summary>
@@ -229,7 +237,9 @@ WHERE event_type = 'login' AND network = 'hosting';
 </details>
 <details><summary>Think question: which attack is this?</summary>
 
-Credential stuffing. One server tries leaked passwords on hundreds of accounts. Almost all fail, but a few get in. Count them by adding `AND result = 'success'`: there are 4. You'll build detection CS-001 for this later.
+Credential stuffing. One server tries leaked passwords on hundreds of accounts. Almost all fail, but a few get in.
+
+The column `result` says if a login worked: `success` or `failure`. Add `AND result = 'success'` to the `COUNT(*)` query: 4 successful logins, from 3 different customers (`U00226` got in twice). You'll build detection CS-001 for this later.
 </details>
 
 ### Exercise 9: who is the victim
@@ -280,6 +290,8 @@ WHERE user_id = 'U00918'
 ```
 `IN ('a', 'b')` means: the value is `a` or `b`.
 
+Times look like `2026-10-10T02:54:00Z`: the date, then `T`, then the time. `Z` means UTC (world time).
+
 **Your question:** for `U00005`, how many minutes were there between adding a new address (`withdrawal_address_added`) and the withdrawal (`withdrawal`)?
 
 <details><summary>Hint</summary>
@@ -289,7 +301,7 @@ Take the example above. Change the customer to `U00005` and the two events to `'
 <details><summary>Answer</summary>
 
 ```sql
-SELECT timestamp, event_type, address FROM events
+SELECT timestamp, event_type FROM events
 WHERE user_id = 'U00005'
   AND event_type IN ('withdrawal_address_added', 'withdrawal');
 ```
@@ -315,6 +327,7 @@ WHERE a.event_type = 'withdrawal_address_added'
 - `FROM events a JOIN events w` uses the same table twice, with two short names. Like `e` and `u` in exercise 9, but now `events` twice.
 - After `ON` there are now three conditions with `AND`. A row from `a` and a row from `w` only belong together if all three match.
 - `julianday(...)` turns a time into a number of days. The difference × 24 × 60 = the number of minutes in between.
+- Here `*` means "multiply" and `-` means "minus" (in exercise 1, `*` meant "all columns"). The part in brackets is calculated first, like in maths.
 - `BETWEEN 0 AND 60` means: from 0 up to and including 60.
 
 **Reading questions** (answer them yourself first):
@@ -337,21 +350,30 @@ WHERE a.event_type = 'withdrawal_address_added'
 </details>
 
 ### Exercise 12: let the test check it
-1. In File Explorer, go to `D:\crypto-soc-detection\detections\ATO-001-sim-swap-takeover`.
-2. Right-click `detection.sql` → **Open with** → **Notepad**.
-3. Paste the query from exercise 11 under the lines that start with `--`. Save with **Ctrl + S**.
-4. Press the Windows key, type `PowerShell` and press Enter.
-5. Type these two lines, each followed by Enter:
-   ```
-   cd D:\crypto-soc-detection
-   python tests\run_detections.py
-   ```
+The test needs Python. Not installed yet? Do [Setup: for the test](../SETUP.md#for-the-test-end-of-week-1) first.
 
-You get a table. The columns mean:
+**Put your query in the detection file**
+1. Open the repo folder you unzipped in Setup (it may be called `crypto-soc-detection-main`), then `detections` → `ATO-001-sim-swap-takeover`.
+2. Open `detection.sql` in a text editor:
+   - **Windows:** right-click → **Open with** → **Notepad**.
+   - **Mac:** right-click → **Open With** → **TextEdit**. If you see colors or fonts, choose **Format → Make Plain Text**.
+3. Paste the query from exercise 11 under the lines that start with `--`. Save (**Ctrl + S** / **Cmd + S**).
+
+**Run the test**
+1. Open a terminal:
+   - **Windows:** press the Windows key, type `PowerShell`, press Enter.
+   - **Mac:** press **Cmd + Space**, type `Terminal`, press Return.
+2. Type `cd ` (with a space after it), drag the repo folder from File Explorer or Finder into the window, and press Enter. Now the terminal is in your repo folder.
+3. Type this and press Enter:
+   - **Windows:** `python tests\run_detections.py`
+   - **Mac:** `python3 tests/run_detections.py`
+
+You get a table with these columns:
+- **Detection:** the name of the detection
+- **Status:** `PASS` = perfect, `WORK` = works but not perfect yet, `TODO` = still empty (you'll do those later)
 - **Caught:** attacks your detection found
 - **False alarms:** customers you flagged by mistake
 - **Missed:** attacks your detection missed
-- **TODO:** detections that are still empty (you'll do those later)
 
 For ATO-001 you see: Caught 2, False alarms 3, Missed 0. You caught both attacks, but also 3 customers who weren't SIM-swap victims.
 

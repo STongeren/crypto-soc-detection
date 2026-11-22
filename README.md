@@ -47,8 +47,8 @@ learning/      weekly exercises I work through
 
 | Week | Tool |
 |---|---|
-| 1 | SQL |
-| 2 | KQL (Microsoft Sentinel) |
+| 1 | [SQL](learning/week1-sql.md) |
+| 2 | [KQL (Microsoft Sentinel)](learning/week2-kql.md) |
 | 3 | SPL (Splunk) |
 | 4 | Python |
 | 5 | Sigma + tuning false positives |
