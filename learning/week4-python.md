@@ -12,7 +12,7 @@ Same rules as before: example first, then your question, hints and answers hidde
 
 1. **Python:** you installed it in week 1. Check: `python --version` (Mac: `python3 --version`).
 2. **An editor:** use [VS Code](https://code.visualstudio.com/download) (free, Windows and Mac). Notepad or TextEdit also works, but VS Code colors your code and shows mistakes.
-3. **Your data:** `data/events.jsonl` and `data/users.csv` must be in the `data` folder. Missing? Download [exchange-dataset.zip](https://github.com/STongeren/crypto-soc-detection/releases/latest/download/exchange-dataset.zip) and unzip it into `data`.
+3. **Your data:** `events.jsonl` and `users.csv` must be **directly** in the `data` folder (next to `exchange.db`). Missing? Download [exchange-dataset.zip](https://github.com/STongeren/crypto-soc-detection/releases/latest/download/exchange-dataset.zip) and unzip it (Windows: right-click → Extract All; Mac: double-click). It unzips into its own folder: move `events.jsonl` and `users.csv` from there into `data`. Skip `exchange.db`: you already have it.
 4. **Where your scripts go:** a folder `learning/week4/` inside the repo. Each exercise is a small file in there, like `ex1.py`.
    - **VS Code (easiest):** File → Open Folder → pick the repo folder. In the file list on the left, right-click `learning` → New Folder → `week4`. Right-click `week4` → New File → `ex1.py`.
    - **Notepad (Windows):** when saving, set "Save as type" to **All files**, otherwise you get `ex1.py.txt`.
@@ -344,7 +344,7 @@ You get `Thijs Bakker sms 4653.0`.
 ### Exercise 8: enrich the alert
 Adding context to an alert is called **enrichment**. It's a big part of SOC automation.
 
-**Example** (`ex8.py`, with the code from exercises 1, 4, 5, 6 and 7 above it):
+**Example** (`ex8.py`, with the code from exercises 1, 4, 5, 6 and 7 above it; delete their `print` lines so you only see the new output):
 ```python
 for user in sorted(detect_ato(events)):
     u = users[user]

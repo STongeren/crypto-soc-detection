@@ -521,7 +521,8 @@ Events
 
 ### Exercise 15: save it, and update your SQL
 1. In the folder `detections/ATO-001-sim-swap-takeover`, make a new file `detection.kql`:
-   - **Windows:** right-click → **New** → **Text Document**, rename it to `detection.kql` and say **Yes** to the extension warning.
+   - **Easiest:** in VS Code, right-click the folder → **New File** → `detection.kql`.
+   - **Windows without VS Code:** first turn on **View → File name extensions** in File Explorer (otherwise you get `detection.kql.txt`). Then right-click → **New** → **Text Document**, rename it to `detection.kql` and say **Yes** to the extension warning.
    - **Mac:** open TextEdit, choose **Format → Make Plain Text**, and save it as `detection.kql`.
 2. Paste your strong rule from exercise 14 in it (without the practice table) and save.
 3. **Now in SQL (retrieval):** open `detection.sql` from week 1 and add the same idea: a third copy of `events`, called `r`, for the SMS reset. Run the test.

@@ -14,7 +14,7 @@ No Git needed:
 2. Unzip it:
    - **Windows:** open your Downloads folder, right-click the ZIP → **Extract All** → **Extract**.
    - **Mac:** open your Downloads folder and double-click the ZIP.
-3. You now have a folder called `crypto-soc-detection-main`. Move it somewhere you can find it, like your Documents folder.
+3. You now have a folder called `crypto-soc-detection-main`. On Windows it is often one folder deeper: `crypto-soc-detection-main\crypto-soc-detection-main`. Open folders until you see `README.md`, `SETUP.md` and `data`: **that** is your repo folder. Move it somewhere you can find it, like your Documents folder.
 
 Know Git? Then:
 ```

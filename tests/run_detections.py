@@ -102,9 +102,13 @@ def main():
             row, bad = run_sql(folder, want, con)
             rows.append(row)
             crashed |= bad
-        if (folder / "detection.py").exists():
+        py_file = folder / "detection.py"
+        if py_file.exists():
+            if not has_code(py_file.read_text(encoding="utf-8"), "#"):
+                rows.append((folder.name + " (python)", "TODO", "", "", ""))
+                continue
             if not (DATA / "events.jsonl").exists():
-                rows.append((folder.name + " (python)", "ERROR: data/events.jsonl not found", "", "", ""))
+                rows.append((folder.name + " (python)", "ERROR: data/events.jsonl not found (week 4, Before you start, step 3)", "", "", ""))
                 crashed = True
                 continue
             row, bad = run_py(folder, want)
