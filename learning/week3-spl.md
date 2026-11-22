@@ -14,10 +14,10 @@ Same rules as before: example first, then your question, hints and answers hidde
 1. Go to [splunk.com/en_us/download/splunk-enterprise.html](https://www.splunk.com/en_us/download/splunk-enterprise.html). Make a free Splunk account when it asks.
 2. Download the version for your computer:
    - **Windows:** the `.msi` file. Double-click it, tick the license box, and click **Customize Options** if you want to install it somewhere else (for example on your D: drive). Choose a username and password for Splunk and **write them down**. Click through until it's done.
-   - **Mac:** the `.dmg` (or `.tgz`) file. Open it and follow the installer. It asks for a username and password: **write them down**.
+   - **Mac:** the `.dmg` file. Open it and follow the installer. It asks for a username and password: **write them down**.
 3. Open your browser at **http://localhost:8000** and log in with that username and password.
 
-You get a 60-day trial. After that you can switch to the free license that never expires: **Settings → Licensing → Change license group → Free license**. Everything in this week works with the free license.
+You get a 60-day trial. After that you can switch to the free license that never expires: **Settings → Licensing → Change license group → Free license**. Everything in this week works with the free license, **except exercise 10** (alerts): do that one during the trial.
 
 ### Load your exchange data
 1. In Splunk, click **Settings** (top right) → **Add Data** → **Upload**.
@@ -82,6 +82,13 @@ index=main sourcetype=csv event_type=password_reset auth_method=sms
 - Quotes around the value are only needed when it has spaces or special characters.
 
 You get the two SIM-swap resets: `U00918` from `VN` and `U00005` from `RU` (newest first).
+
+Now count all password resets:
+```spl
+index=main sourcetype=csv event_type=password_reset
+| stats count
+```
+64.
 
 **Predict first:** KQL's `==` is case-sensitive. What do you get with `event_type=PASSWORD_RESET`?
 
@@ -212,7 +219,7 @@ index=main sourcetype=csv earliest=-24h
 0. The data is from October and November 2026, not from the last 24 hours. In a real SOC, almost every search has a short time range: that's what keeps searches fast.
 </details>
 
-**Your question:** count the logins per day (`span=1d`) and find the day with the most failed logins.
+**Your question:** count the **failed** logins per day (`span=1d`) and find the day with the most.
 
 <details><summary>Hint</summary>
 
@@ -293,6 +300,7 @@ Change the last line to `| stats count by user_id country`. All three are `SG`: 
 SQL and KQL used joins for ATO-001. In SPL you often do it differently: you collapse each customer's events into **one row** with `stats`, and then compare the times in that row.
 
 **New:**
+- `event_type IN (a, b, c)` = `event_type` is one of these, like `IN` in SQL.
 - `eval` makes a new field, like `extend` in KQL.
 - `if(condition, a, b)` gives `a` when the condition is true, otherwise `b`. `null()` means empty.
 - `min(...)` and `max(...)` inside `stats` take the smallest or biggest value per group. Empty values are skipped.
@@ -373,11 +381,13 @@ In a real SOC, a detection runs by itself on a schedule and creates an alert. In
 1. Run your INS-001 search from exercise 7.
 2. Click **Save As → Alert** (top right, above the search box).
 3. Title: `INS-001 support agent without ticket`.
-4. Alert type: **Scheduled**, **Run every hour**.
+4. Alert type: **Scheduled** → **Run on Cron Schedule**.
+   - **Time Range:** All time (your data is old; a real alert would look at the last hour).
+   - **Cron Expression:** `*/5 * * * *` (= every 5 minutes).
 5. Trigger condition: **Number of Results**, **is greater than** `0`.
-6. Trigger action: **Add to Triggered Alerts**. Click **Save**.
+6. Trigger action: **Add** → **Add to Triggered Alerts**. Click **Save**.
 
-Find your alert under **Alerts** in the menu on the left. The exact wording of the options can differ a little between Splunk versions. (Because your data is old, set the alert's time range to **All time** if you want to see it fire. A real alert would look at the last hour.)
+After 5 minutes, open the alert under **Alerts** (menu on the left, or **Activity → Triggered Alerts** in older versions) and you see it fired. Then **disable** it (Alerts → Edit → Disable), so it doesn't keep running. The exact wording can differ a little between Splunk versions. (Because your data is old, set the alert's time range to **All time** if you want to see it fire. A real alert would look at the last hour.)
 
 ### Exercise 11: save your SPL in the repo
 1. In each detection folder (`ATO-001...`, `CS-001...`, `INS-001...`), make a file `detection.spl`. Same way as `detection.kql` in week 2: VS Code → New File, or Notepad with "Save as type: All files", or TextEdit with **Format → Make Plain Text**.
@@ -402,7 +412,7 @@ index=main sourcetype=csv event_type=withdrawal amount_eur>1000
 | stats count by country
 | sort - count
 ```
-`NL` 102, `DE` 31, `ES` 16, `FR` 14, `BE` 8, `RU` 1, `VN` 1. The same as week 1, exercise 13.
+`NL` 102, `DE` 31, `ES` 16, `FR` 14, `BE` 8, `RU` 1, `VN` 1. The same as week 1, exercise 13 (`RU` and `VN` both have 1, so they can swap places).
 </details>
 
 ### Exercise 13: everything one customer did
@@ -443,8 +453,15 @@ You can now say honestly: "I can search, filter, count, set thresholds, use subs
 
 Optional, and big (about 320 MB). Splunk's own **Boss of the SOC v3** is a full attack on a fictional brewery, with Windows, cloud and network logs, used in Splunk's competitions.
 
-1. Download it from [github.com/splunk/botsv3](https://github.com/splunk/botsv3) and follow the install steps in its README.
-2. Search `index=botsv3 | stats count by sourcetype` (time picker: **All time**) to see what's inside.
-3. Pick one sourcetype and use what you learned this week to find something odd.
+1. On [github.com/splunk/botsv3](https://github.com/splunk/botsv3), download `botsv3_data_set.tgz` (the link is in its README).
+2. Unpack it:
+   - **Windows:** in PowerShell, go to your Downloads folder (`cd $HOME\Downloads`) and run `tar -xzf botsv3_data_set.tgz`.
+   - **Mac:** double-click the file in Downloads.
+3. Move the folder `botsv3_data_set` into Splunk's apps folder:
+   - **Windows:** `C:\Program Files\Splunk\etc\apps\` (or the folder you chose when installing, plus `\etc\apps\`).
+   - **Mac:** `/Applications/Splunk/etc/apps/`.
+4. In Splunk: **Settings → Server controls → Restart Splunk**. Log in again when it's back.
+5. Search `index=botsv3 | stats count by sourcetype` (time picker: **All time**) to see what's inside.
+6. Pick one sourcetype and use what you learned this week to find something odd.
 
 There are no answers here: this is real investigating.
