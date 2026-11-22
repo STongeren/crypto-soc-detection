@@ -4,12 +4,13 @@
     "U00918"
   ],
   "CRED_STUFFING": {
-    "ip": "192.0.66.239",
+    "ip": "100.73.66.239",
     "compromised_users": [
       "U00226",
       "U00242",
       "U00780"
-    ]
+    ],
+    "note": "2FA is only asked on withdrawals to new addresses, not on login"
   },
   "INSIDER": [
     "AG07"

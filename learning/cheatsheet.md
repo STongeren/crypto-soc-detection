@@ -39,7 +39,7 @@ Keep this open next to DB Browser. You don't have to memorize anything: copy an 
 |---|---|---|
 | `event_type` | what happened | `login` (20219), `support_account_view` (6939), `withdrawal` (1171), `deposit` (969), `withdrawal_address_added` (86), `password_reset` (64), `mfa_changed` (2) |
 | `result` | did it work | `success` (28464), `failure` (986) |
-| `auth_method` | how the person proved who they are | `NULL` (9165), `password+sms` (8821), `password+totp` (8223), `password+passkey` (2186), `password` (989), `email` (62), `sms` (4) |
+| `auth_method` | how the person proved who they are | `NULL` (9165), `password+sms` (8820), `password+totp` (8223), `password+passkey` (2186), `password` (990), `email` (62), `sms` (4) |
 | `network` | type of internet connection | `residential` (22235), `corporate` (6939), `hosting` (263), `mobile` (13) |
 | `actor` | who did it | `customer` (22511), `support_agent` (6939) |
 | `asset` | which crypto | `NULL` (27310), `USDC` (552), `SOL` (545), `BTC` (531), `ETH` (512) |
