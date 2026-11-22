@@ -12,13 +12,14 @@ Keep this open next to DB Browser. You don't have to memorize anything: copy an 
 | two conditions at once | `... WHERE event_type = 'login' AND country = 'RU';` | `AND` = both must be true |
 | one of two | `... WHERE country = 'RU' OR country = 'VN';` | `OR` = either one |
 | from a list | `... WHERE country IN ('RU', 'VN', 'SG');` | shorter than many `OR`s |
-| everything except | `... WHERE country != 'NL';` | `!=` = is not |
+| everything except | `... WHERE country != 'NL';` | `!=` = is not. Rows where the value is `NULL` are dropped too |
 | bigger or smaller | `... WHERE amount_eur > 5000;` | numbers without `' '` |
 | is empty | `... WHERE ticket_id IS NULL;` | not `= NULL`, that doesn't work |
 | which values exist | `SELECT DISTINCT network FROM events;` | each value only once |
 | count | `SELECT COUNT(*) FROM events WHERE event_type = 'login';` | gives one number |
 | count different values | `SELECT COUNT(DISTINCT user_id) FROM events;` | each customer counts once |
 | count per type | `SELECT event_type, COUNT(*) FROM events GROUP BY event_type;` | what's in `GROUP BY` also goes after `SELECT` |
+| only groups above a threshold | `... GROUP BY country HAVING COUNT(*) > 2000;` | `WHERE` filters rows before grouping, `HAVING` filters groups after |
 | sort, biggest first | `... ORDER BY amount_eur DESC;` | `ASC` = smallest first |
 | top 5 | `... ORDER BY amount_eur DESC LIMIT 5;` | `ORDER BY` comes before `LIMIT` |
 | add the customer's name | `SELECT e.timestamp, u.name FROM events e JOIN users u ON u.user_id = e.user_id;` | `e` and `u` are short names for the tables |
@@ -26,7 +27,7 @@ Keep this open next to DB Browser. You don't have to memorize anything: copy an 
 | minutes between two events | `(julianday(b.timestamp) - julianday(a.timestamp)) * 24 * 60` | `julianday` turns a date into a number of days |
 | a range | `... BETWEEN 0 AND 60` | from 0 up to and including 60 |
 
-**The order is always:** `SELECT` → `FROM` → `JOIN` → `WHERE` → `GROUP BY` → `ORDER BY` → `LIMIT`
+**The order is always:** `SELECT` → `FROM` → `JOIN` → `WHERE` → `GROUP BY` → `HAVING` → `ORDER BY` → `LIMIT`
 
 **Lines that start with `--`** are skipped by SQL. Use them for your own notes.
 
@@ -34,14 +35,14 @@ Keep this open next to DB Browser. You don't have to memorize anything: copy an 
 
 ### Table `events` (one row = one thing someone did)
 
-| Column | What it is | Possible values (number of rows) |
+| Column | What it is | Possible values (number of rows). `NULL` = empty: find it with `IS NULL` |
 |---|---|---|
 | `event_type` | what happened | `login` (20219), `support_account_view` (6939), `withdrawal` (1171), `deposit` (969), `withdrawal_address_added` (86), `password_reset` (64), `mfa_changed` (2) |
 | `result` | did it work | `success` (28464), `failure` (986) |
-| `auth_method` | how the person proved who they are | `(empty)` (9165), `password+sms` (8821), `password+totp` (8223), `password+passkey` (2186), `password` (989), `email` (62), `sms` (4) |
+| `auth_method` | how the person proved who they are | `NULL` (9165), `password+sms` (8821), `password+totp` (8223), `password+passkey` (2186), `password` (989), `email` (62), `sms` (4) |
 | `network` | type of internet connection | `residential` (22235), `corporate` (6939), `hosting` (263), `mobile` (13) |
 | `actor` | who did it | `customer` (22511), `support_agent` (6939) |
-| `asset` | which crypto | `(empty)` (27310), `USDC` (552), `SOL` (545), `BTC` (531), `ETH` (512) |
+| `asset` | which crypto | `NULL` (27310), `USDC` (552), `SOL` (545), `BTC` (531), `ETH` (512) |
 | `country` | country of the IP address | `NL` (20740), `ES` (2378), `DE` (2321), `BE` (2012), `FR` (1723), `SG` (263), `VN` (5), `RU` (5), `TH` (3) |
 
 **Columns without a fixed list:**

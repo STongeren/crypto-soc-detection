@@ -45,13 +45,16 @@ learning/      weekly exercises I work through
 
 ## Roadmap
 
-| Week | Tool |
-|---|---|
-| 1 | [SQL](learning/week1-sql.md) |
-| 2 | [KQL (Microsoft Sentinel)](learning/week2-kql.md) |
-| 3 | SPL (Splunk) |
-| 4 | Python |
-| 5 | Sigma + tuning false positives |
-| 6 | Blockchain tracing |
-| 7 | AWS CloudTrail incident report |
-| 8 | Kubernetes logs |
+Ordered by how often crypto SOC job postings ask for each skill (10 postings checked in November 2026).
+
+| Week | Skill | Asked in |
+|---|---|---|
+| 1 | [SQL](learning/week1-sql.md) | foundation (and 4 of 5 investigations postings) |
+| 2 | [KQL (Microsoft Sentinel)](learning/week2-kql.md) | 5 of 10 name KQL or a close cousin |
+| 3 | SPL (Splunk) | SIEM in 10 of 10 |
+| 4 | Python + alert enrichment | 7 of 10 |
+| 5 | Sigma + tuning false positives | detection engineering |
+| 6 | Identity logs + AWS CloudTrail | 6 and 7 of 10 |
+| 7 | EDR + phishing triage | 7 and 3 of 10 |
+| 8 | Incident report | case writing in 5 of 10 |
+| + | Optional: blockchain tracing, Kubernetes | plus, not required |

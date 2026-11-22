@@ -1,10 +1,12 @@
 """Generate a synthetic crypto-exchange log dataset for detection engineering practice.
 
-Everything is fake: no real people, IPs or wallet addresses.
+Everything is fake: no real people or wallet addresses. Customer IPs come from
+100.64.0.0/10 and office IPs from 10.0.0.0/8, ranges that are never used on the public internet.
 
 Hidden in the data (ground truth in tests/ground_truth.json):
   ATO                 account takeover after a SIM swap (SMS reset, 2FA change, new address, balance out)
   CRED_STUFFING       one hosting IP tries many accounts; a few logins succeed
+                      (this exchange only asks for 2FA on withdrawals to new addresses, not on login)
   INSIDER             a support agent opens many high-balance accounts without a ticket, at night
   ADDRESS_POISONING   a dust deposit from a look-alike address, later the victim withdraws to it
 
@@ -44,8 +46,9 @@ UA = {
     "mac": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) Safari/605.1",
     "script": "python-requests/2.32",
 }
-PREFIX = {"NL": "10.31", "BE": "10.32", "DE": "10.49", "FR": "10.33", "ES": "10.34",
-          "US": "10.1", "TH": "10.66", "RU": "198.51", "VN": "203.0", "SG": "192.0"}
+# Customer IPs come from 100.64.0.0/10 (shared address space): never used on the public internet.
+PREFIX = {"NL": "100.64", "BE": "100.65", "DE": "100.66", "FR": "100.67", "ES": "100.68",
+          "US": "100.69", "TH": "100.70", "RU": "100.71", "VN": "100.72", "SG": "100.73"}
 FIRST = ["Sam", "Noa", "Liam", "Emma", "Daan", "Julia", "Finn", "Sara", "Milan", "Lotte",
          "Bram", "Eva", "Luuk", "Anna", "Jesse", "Fleur", "Thijs", "Iris", "Ruben", "Mila"]
 LAST = ["de Vries", "Jansen", "Bakker", "Visser", "Smit", "Meijer", "de Boer", "Mulder",
@@ -156,7 +159,7 @@ for day in range(DAYS):
                 ticket=f"T-{rng.randint(100000, 999999)}", ip=f"10.200.{agents.index(ag)}.10",
                 country="NL", network="corporate", device=f"corp-{ag}", ua=UA["web"])
 
-truth = {"ATO": [], "CRED_STUFFING": {"ip": None, "compromised_users": []}, "INSIDER": [],
+truth = {"ATO": [], "CRED_STUFFING": {"ip": None, "compromised_users": [], "note": "2FA is only asked on withdrawals to new addresses, not on login"}, "INSIDER": [],
          "ADDRESS_POISONING": [], "BENIGN_LOOKALIKES": []}
 used = set()
 
@@ -202,7 +205,7 @@ victim = weak[0]
 t = t0 + timedelta(days=1, hours=1)
 addr = new_address()
 kw = dict(ip=cs_ip, country="SG", network="hosting", device="dev-000000", ua=UA["script"])
-add(t, victim, "login", auth="password+sms", **kw)
+add(t, victim, "login", auth="password", **kw)
 add(t + timedelta(minutes=4), victim, "withdrawal_address_added", address=addr, **kw)
 add(t + timedelta(minutes=6), victim, "withdrawal", amount=round(victim["balance_eur"] * 0.9, 2),
     asset="BTC", address=addr, **kw)

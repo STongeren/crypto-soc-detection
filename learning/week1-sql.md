@@ -8,7 +8,7 @@
 
 Some questions ask you to **predict first**. Just guess. A guess that turns out wrong sticks better than an answer you only read.
 
-3 exercises a day, about 20 minutes.
+3 or 4 exercises a day, about 20 to 30 minutes. Day 5 you work on your own.
 
 ---
 
@@ -176,6 +176,36 @@ SELECT country, COUNT(*) FROM events GROUP BY country;
 No. `TH` is a customer on holiday in Thailand. A detection that only looks at "different country" raises false alarms. That's why you combine signals.
 </details>
 
+### Exercise 6b: only the big groups
+**New: filtering groups with `HAVING`.** `WHERE` filters rows **before** they are grouped. `HAVING` filters the groups **after** counting. This is how a SOC finds "more than N times", the base of every threshold alert.
+```sql
+SELECT country, COUNT(*) FROM events
+GROUP BY country
+HAVING COUNT(*) > 2000;
+```
+You get 4 countries: `NL`, `ES`, `DE` and `BE`. `FR` has fewer than 2000 events, so its group is dropped.
+
+**Predict first:** how many event types happen more than 1000 times?
+**Your question:** show the event types that happen more than 1000 times.
+
+<details><summary>Hint</summary>
+
+Same as the example, with `event_type` instead of `country`, and `1000` instead of `2000`.
+</details>
+<details><summary>Answer</summary>
+
+```sql
+SELECT event_type, COUNT(*) FROM events
+GROUP BY event_type
+HAVING COUNT(*) > 1000;
+```
+3: `login`, `support_account_view` and `withdrawal`.
+</details>
+<details><summary>Think question: why can't you write `WHERE COUNT(*) > 1000`?</summary>
+
+Because `WHERE` runs before the counting. At that moment there is no count yet. That's exactly why `HAVING` exists.
+</details>
+
 ---
 
 ## Day 3: sorting and joining
@@ -277,6 +307,9 @@ Sara de Wit, with `sms`.
 Whoever takes over her phone number (SIM swap) also gets her SMS codes. With an authenticator app or a passkey this wouldn't have worked.
 </details>
 
+### Prep for day 4 (10 minutes)
+On day 4 a test checks your work. It needs Python. Install it now, so day 4 is only about SQL: follow [Setup: for the test](../SETUP.md#for-the-test-end-of-week-1). You're done when `python --version` (Mac: `python3 --version`) shows a version number.
+
 ---
 
 ## Day 4: your first detection
@@ -306,6 +339,58 @@ WHERE user_id = 'U00005'
   AND event_type IN ('withdrawal_address_added', 'withdrawal');
 ```
 4 minutes: 02:50 new address, 02:54 withdrawal.
+</details>
+
+### Exercise 10b: what joining a table to itself does
+In exercise 9 you joined two different tables. A detection often joins **the same table to itself**, to put two events of one customer next to each other in one row.
+
+Picture it with 2 rows of `U00005`:
+
+| | timestamp | event_type | address |
+|---|---|---|---|
+| row **a** | 02:50 | withdrawal_address_added | 0x0ee2... |
+| row **w** | 02:54 | withdrawal | 0x0ee2... |
+
+After the join they become **one** row with both times side by side:
+
+| a.timestamp | a.event_type | w.timestamp | w.event_type |
+|---|---|---|---|
+| 02:50 | withdrawal_address_added | 02:54 | withdrawal |
+
+Now you can subtract the two times. That's the trick behind exercise 11.
+
+**Careful:** a join pairs **every** matching row with **every** other one. Try it.
+
+**Predict first:** `U00005` has 19 events. If you join his events to themselves on `user_id` only, how many rows do you get?
+```sql
+SELECT COUNT(*)
+FROM events a
+JOIN events w ON w.user_id = a.user_id
+WHERE a.user_id = 'U00005';
+```
+
+<details><summary>Answer</summary>
+
+361. That's 19 × 19: every event paired with every event, including itself.
+</details>
+
+**Your question:** add two conditions to the `ON` part so only "new address" on the `a` side and "withdrawal" on the `w` side are paired. How many rows are left?
+
+<details><summary>Hint</summary>
+
+After `ON w.user_id = a.user_id` add `AND a.event_type = 'withdrawal_address_added' AND w.event_type = 'withdrawal'`.
+</details>
+<details><summary>Answer</summary>
+
+```sql
+SELECT COUNT(*)
+FROM events a
+JOIN events w ON w.user_id = a.user_id
+ AND a.event_type = 'withdrawal_address_added'
+ AND w.event_type = 'withdrawal'
+WHERE a.user_id = 'U00005';
+```
+1 row: exactly the pair from the picture. The conditions in `ON` decide which rows are allowed to pair up.
 </details>
 
 ### Exercise 11: read a real detection
@@ -350,7 +435,7 @@ WHERE a.event_type = 'withdrawal_address_added'
 </details>
 
 ### Exercise 12: let the test check it
-The test needs Python. Not installed yet? Do [Setup: for the test](../SETUP.md#for-the-test-end-of-week-1) first.
+The test needs Python, which you installed at the end of day 3.
 
 **Put your query in the detection file**
 1. Open the repo folder you unzipped in Setup (it may be called `crypto-soc-detection-main`), then `detections` → `ATO-001-sim-swap-takeover`.
@@ -395,3 +480,68 @@ Only `U00005` and `U00918` had a `password_reset` and an `mfa_changed` through `
 
 In week 2 you improve ATO-001 until it only finds the 2 real victims. Write your approach in the detection's README already.
 </details>
+
+---
+
+## Day 5: on your own
+
+Today there are no examples and no hints. Only the [cheat sheet](cheatsheet.md). This is the step from "I can follow" to "I can write it". Take your time. Stuck for more than 10 minutes? Then look back at the exercise the cheat sheet points to.
+
+**One new thing first: empty values.** An empty cell in SQL is `NULL`. You can't find it with `= ''` or `= NULL`. Use `IS NULL`:
+```sql
+SELECT COUNT(*) FROM events
+WHERE event_type = 'support_account_view' AND ticket_id IS NULL;
+```
+This counts support-agent views without a ticket: 180.
+
+### Exercise 13: big withdrawals per country
+**Your question:** per country, how many withdrawals were above 1000 euro? Biggest first.
+
+<details><summary>Answer</summary>
+
+```sql
+SELECT country, COUNT(*) FROM events
+WHERE event_type = 'withdrawal' AND amount_eur > 1000
+GROUP BY country
+ORDER BY COUNT(*) DESC;
+```
+`NL` 102, `DE` 31, `ES` 16, `FR` 14, `BE` 8, `VN` 1, `RU` 1. The `VN` and `RU` ones are the two SIM-swap thefts.
+
+Got all countries with much higher numbers? You probably forgot `event_type = 'withdrawal'`, so deposits counted too.
+</details>
+
+### Exercise 14: your second detection (INS-001)
+A bribed support agent opens customer accounts without a ticket (like the Coinbase case).
+
+**Your question:** which support agent opened accounts without a ticket, and how many times? Then turn it into a detection: return the agent as a column named `entity`, put it in `detections/INS-001-support-agent-no-ticket/detection.sql`, and run the test like in exercise 12.
+
+<details><summary>Answer</summary>
+
+```sql
+SELECT agent_id AS entity, COUNT(*)
+FROM events
+WHERE event_type = 'support_account_view' AND ticket_id IS NULL
+GROUP BY agent_id;
+```
+`AG07`, 180 times. The test shows INS-001 as **PASS**: caught 1, false alarms 0, missed 0. Your first perfect detection.
+
+The busy agent `AG03` is not flagged: on their busy day every view had a ticket. That's the look-alike this detection has to ignore.
+</details>
+
+### Exercise 15: week 1 quiz
+Answer from memory first, then run the query to check. Write your guess down before you run it.
+
+1. `SELECT COUNT(*) FROM users WHERE mfa_method = 'passkey';`
+2. `SELECT COUNT(DISTINCT agent_id) FROM events;`. There are 12 support agents. Does `NULL` count as a 13th?
+3. `SELECT COUNT(*) FROM events WHERE event_type = 'login' AND result = 'failed';`
+4. `SELECT amount_eur FROM events WHERE event_type = 'withdrawal' ORDER BY amount_eur LIMIT 1;`. Is this the biggest or the smallest withdrawal?
+
+<details><summary>Answers</summary>
+
+1. **116.** Got 0? Check the spelling and the quotes: `'passkey'`, all lower case.
+2. **12.** `COUNT(DISTINCT ...)` skips `NULL`. Thought 13? Remember: `NULL` is "no value", not a value.
+3. **0.** The value is `'failure'`, not `'failed'`. This is why you check values with `DISTINCT` first. With `'failure'` you get 986.
+4. **The smallest**, 1.01. `ORDER BY` without `DESC` sorts small to big.
+</details>
+
+You can now say honestly: "I can filter, count, group, set thresholds and join log tables in SQL, and I built two tested detections."

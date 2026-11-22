@@ -74,17 +74,18 @@ Want to build the dataset yourself instead of downloading it? Run `python data/g
 
 Download these when you get there.
 
-| Week | Tool | What you need | Windows | Mac | Linux |
+| Week | Skill | What you need | Windows | Mac | Linux |
 |---|---|---|---|---|---|
 | 2 | KQL | Nothing to install. A free Microsoft account. Start with [week 2](learning/week2-kql.md) | [Practice environment in your browser](https://dataexplorer.azure.com/clusters/help/databases/Samples) | same | same |
 | 3 | Splunk | Splunk Enterprise (free account, 60-day trial, then a free license that never expires) | [Download](https://www.splunk.com/en_us/download/splunk-enterprise.html) | same page, macOS tab | same page, Linux tab |
 | 3 | Splunk | BOTSv3, a real attack dataset (320 MB) | [github.com/splunk/botsv3](https://github.com/splunk/botsv3) | same | same |
 | 4 | Python | Python (see above) | | | |
 | 5 | Sigma | Nothing to install | [sigconverter.io](https://sigconverter.io) | same | same |
-| 6 | Blockchain | Nothing to install | [etherscan.io](https://etherscan.io) | same | same |
-| 7 | AWS | A free AWS account and the AWS CLI | [AWS CLI](https://aws.amazon.com/cli/) | same page | same page |
-| 8 | Kubernetes | Docker Desktop + kind | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | same page | [Docker Engine](https://docs.docker.com/engine/install/) |
-| 8 | Kubernetes | kind | [Install guide](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) | same | same |
+| 6 | Cloud | A free AWS account and the AWS CLI | [AWS CLI](https://aws.amazon.com/cli/) | same page | same page |
+| 7 | EDR | Sysmon (Windows only) | [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) | | |
+| 7 | Phishing | Nothing to install | [Message Header Analyzer](https://mha.azurewebsites.net) | same | same |
+| + | Blockchain | Nothing to install | [etherscan.io](https://etherscan.io) | same | same |
+| + | Kubernetes | Docker Desktop + kind | [Docker Desktop](https://www.docker.com/products/docker-desktop/) and [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) | same | [Docker Engine](https://docs.docker.com/engine/install/) + kind |
 
 **Nice to have:** a code editor to open the files, like [VS Code](https://code.visualstudio.com/download) (Windows, Mac, Linux). Notepad (Windows) or TextEdit (Mac) also works.
 

@@ -1,8 +1,12 @@
 # Week 2: KQL
 
-KQL (Kusto Query Language) is the language of Microsoft Sentinel, Microsoft Defender and Azure Data Explorer. Bitpanda's SOC Analyst job asks for it. It looks like SQL, but it reads top to bottom: you start with a table and pipe it through steps.
+KQL (Kusto Query Language) is the language of Microsoft Sentinel and Microsoft Defender, two of the most used tools in SOC teams. Crypto SOC job postings name it (for example Keyrock and Scrypt). Teams on Elastic use close cousins (Kibana KQL and ES|QL) built on the same ideas.
 
-Same rules as week 1: example first, then your question, hints and answers hidden, predict before you look. Every query and answer below was tested in the free practice environment. Keep the [KQL cheat sheet](cheatsheet-kql.md) open next to it.
+KQL looks like SQL, but it reads top to bottom: you start with a table and pipe it through steps.
+
+Same rules as week 1: example first, then your question, hints and answers hidden, predict before you look. Keep the [KQL cheat sheet](cheatsheet-kql.md) open next to it. Every query and answer below was tested in the free practice environment.
+
+Days 2 to 4 start with a 2-minute **warm-up**: one query from earlier, from memory. Remembering is what makes it stick.
 
 ---
 
@@ -39,7 +43,7 @@ StormEvents
 | take 5
 | project State, EventType, DamageProperty
 ```
-- `take 5` = give me 5 rows (like `LIMIT 5` in SQL)
+- `take 5` = give me any 5 rows (like `LIMIT 5` in SQL). Which 5 is not promised: they can differ each time.
 - `project` = only these columns (like the column list after `SELECT` in SQL)
 
 **Your question:** show 10 rows with only the columns `StartTime`, `State` and `EventType`.
@@ -55,7 +59,7 @@ StormEvents
 | take 10
 | project StartTime, State, EventType
 ```
-`take` gives random rows, so your 10 rows can be different from someone else's. That's fine.
+Your 10 rows can be different from someone else's. `take` is for a quick look, never for an answer.
 </details>
 
 ### Exercise 2: which values exist
@@ -97,8 +101,9 @@ StormEvents
 | where State == "TEXAS"
 | count
 ```
-`where` filters, like in SQL. Two differences:
-- KQL compares with **two** equals signs: `==`. One `=` gives an error.
+`where` filters, like in SQL. Three differences:
+- KQL compares with **two** equals signs: `==`.
+- `==` is **case-sensitive**: `"TEXAS"` and `"texas"` are different. Want to ignore case? Use `=~`.
 - Text can go between `"double"` or `'single'` quotes. Both work.
 
 Two conditions? Use `and`, just like `AND` in SQL:
@@ -107,6 +112,13 @@ StormEvents
 | where State == "TEXAS" and EventType == "Hail"
 | count
 ```
+
+**Predict first:** what does `StormEvents | where State == "texas" | count` give?
+
+<details><summary>Answer</summary>
+
+0. The data says `TEXAS` in capitals, and `==` checks case. With `=~ "texas"` you get the Texas rows again. In detection rules, `==` is preferred: it's faster and exact.
+</details>
 
 **Your question:** how many floods (`"Flood"`) were there in Texas?
 
@@ -126,7 +138,16 @@ StormEvents
 
 ---
 
-## Day 2: sorting, calculating and counting per group
+## Day 2: sorting, calculating, counting per group, and time
+
+**Warm-up (from memory, in DB Browser):** write the SQL that counts the password resets that went through SMS.
+<details><summary>Answer</summary>
+
+```sql
+SELECT COUNT(*) FROM events WHERE event_type = 'password_reset' AND auth_method = 'sms';
+```
+2.
+</details>
 
 ### Exercise 4: the worst flood
 **Example:**
@@ -155,15 +176,17 @@ StormEvents
 August 18, 2007, 5,000,000 dollars. (Depending on your settings the date shows as `18/08/2007` or `8/18/2007`.)
 </details>
 
-### Exercise 5: calculate a new column
+### Exercise 5: add a calculated column
 **Example:**
 ```kql
 StormEvents
 | where State == "TEXAS" and EventType == "Flood"
 | top 5 by DamageProperty
-| project StartTime, EndTime, Duration = EndTime - StartTime
+| extend Duration = EndTime - StartTime
+| project StartTime, EndTime, Duration
 ```
-`Duration = EndTime - StartTime` makes a new column called `Duration`: the end time minus the start time. KQL can subtract times directly. SQL needed `julianday` for that.
+- `extend Duration = EndTime - StartTime` **adds** a new column called `Duration` and keeps all the others. KQL can subtract times directly. SQL needed `julianday` for that.
+- `project` then picks the columns you want to see. (`project` can also make a column, but then it drops every other one. Detection rules use `extend` all the time.)
 
 A duration looks like `1.02:15:00`: that's 1 day, 2 hours and 15 minutes. Without a day in front, `05:00:00` is 5 hours.
 
@@ -182,8 +205,8 @@ StormEvents
 | sort by Total desc
 ```
 - `summarize ... by State` makes a group per state, like `GROUP BY` in SQL.
-- `Total = count()` counts the rows per group and calls that column `Total`.
-- `sort by Total desc` puts the biggest first. (`asc` = smallest first.)
+- `Total = count()` counts the rows per group and calls that column `Total`. Note the difference: `| count` (exercise 1) counts the whole table in one step. `count()` with brackets is used **inside** `summarize`.
+- `sort by Total desc` puts the biggest first. (`asc` = smallest first. Without either, KQL sorts biggest first: the opposite of SQL.)
 
 Texas is on top with 4701.
 
@@ -204,17 +227,88 @@ StormEvents
 `Thunderstorm Wind`, 13015 times.
 </details>
 
+### Exercise 7: a threshold
+In SQL you used `HAVING`. In KQL you just add a `where` **after** the `summarize`, because each step works on the result of the step before it:
+```kql
+StormEvents
+| summarize Total = count() by EventType
+| where Total > 10000
+```
+This keeps only the storm types with more than 10000 events: `Thunderstorm Wind` and `Hail`.
+
+**Your question:** which states had more than 2000 storm events?
+
+<details><summary>Answer</summary>
+
+```kql
+StormEvents
+| summarize Total = count() by State
+| where Total > 2000
+| sort by Total desc
+```
+5: `TEXAS` 4701, `KANSAS` 3166, `IOWA` 2337, `ILLINOIS` 2022, `MISSOURI` 2016.
+</details>
+
+### Exercise 8: time
+A real SOC never searches all the data. Every query starts with a time window, almost always with `ago()`:
+```kql
+StormEvents
+| where StartTime > ago(1d)
+| count
+```
+`ago(1d)` means "1 day before now". So this counts storms from the last 24 hours.
+
+**Predict first:** what do you get?
+
+<details><summary>Answer</summary>
+
+0. The storms are from 2007, so none happened in the last day. In Sentinel you'd write `| where TimeGenerated > ago(1d)` as the first line of almost every query. Here the data is old, so we use fixed dates with `between` instead.
+</details>
+
+**New: counting per time slot with `bin()`.** `bin(StartTime, 7d)` rounds every time down to its week, so `summarize` can count per week:
+```kql
+StormEvents
+| where StartTime between (datetime(2007-01-01) .. datetime(2007-12-31)) and DamageCrops > 0
+| summarize EventCount = count() by bin(StartTime, 7d)
+| render timechart
+```
+`render timechart` draws it as a line chart. You see a peak in summer.
+
+**Your question:** count all storms per **30 days** (`30d`) in 2007 and draw it. Which period had the most?
+
+<details><summary>Hint</summary>
+
+Take the example, remove `and DamageCrops > 0`, and change `7d` to `30d`.
+</details>
+<details><summary>Answer</summary>
+
+```kql
+StormEvents
+| where StartTime between (datetime(2007-01-01) .. datetime(2007-12-31))
+| summarize EventCount = count() by bin(StartTime, 30d)
+| render timechart
+```
+The highest point is the 30 days starting June 14, 2007: 7,531 storms. Hover over the line to see the numbers, or remove `render timechart` to see the table.
+</details>
+
 ---
 
 ## Day 3: your own exchange data
 
-Now you leave the storms and go back to your crypto exchange.
+**Warm-up (from memory, in DB Browser):** write the SQL that shows the event types happening more than 1000 times.
+<details><summary>Answer</summary>
+
+```sql
+SELECT event_type, COUNT(*) FROM events GROUP BY event_type HAVING COUNT(*) > 1000;
+```
+</details>
 
 ### How the practice table works
 Open **[week2-events.kql](week2-events.kql)**. It contains 23 events from your exchange: password resets, 2FA changes, new withdrawal addresses and withdrawals of 7 customers. Some are attacks, some are normal.
 
 It starts with `let Events = datatable(...)`. What's new:
-- `datatable(...)` builds a small table right inside your query. First the column names and types, then the rows.
+- `datatable(...)` builds a small table right inside your query. First the columns with their type, then the rows.
+- The types: `datetime` = a date and time, `string` = text, `real` = a number with decimals. `real(null)` = an empty number (a password reset has no amount).
 - `let Events = ...;` gives that table a name, `Events`, so you can use it below. The `;` at the end closes the `let`.
 
 **How to use it in every exercise below:**
@@ -232,7 +326,7 @@ Events
 ```
 This gives 23.
 
-### Exercise 7: the SMS resets
+### Exercise 9: the SMS resets
 **Example (under the table):**
 ```kql
 Events
@@ -254,36 +348,43 @@ Events
 2 rows: `U00005` (from `RU`) and `U00918` (from `VN`). The same two victims you found with SQL.
 </details>
 
-### Exercise 8: count per network
-**Your question:** count how many of the 23 events came from each `network`. Use exercise 6 as your example.
+### Exercise 10: events and customers per network
+**New: `dcount()`** counts **different** values inside `summarize`, like `COUNT(DISTINCT ...)` in SQL:
+```kql
+Events
+| summarize Customers = dcount(user_id)
+```
+This gives 7. (`dcount` is very close but not always exact on huge tables. Need it exact? Use `count_distinct()`.)
+
+**Your question:** per `network`, show how many events **and** how many different customers there are. You can put two counts in one `summarize`, separated by a comma.
 
 <details><summary>Hint</summary>
 
-`summarize Total = count() by network`
+`summarize Total = count(), Customers = dcount(user_id) by network`
 </details>
 <details><summary>Answer</summary>
 
 ```kql
 Events
-| summarize Total = count() by network
+| summarize Total = count(), Customers = dcount(user_id) by network
 | sort by Total desc
 ```
-`residential` 11, `mobile` 10, `hosting` 2.
+`residential` 11 events from 4 customers, `mobile` 10 from 3, `hosting` 2 from 1.
 </details>
-<details><summary>Think question: which 2 events came from a data-center server, and why is that strange?</summary>
+<details><summary>Think question: which customer used a data-center server, and why is that strange?</summary>
 
-Both are from `U00226` in `SG`: a new address and a withdrawal 2 minutes later. Customers don't use servers in data centers. This account was taken over in the credential-stuffing attack.
+`U00226` in `SG`: a new address and a withdrawal 2 minutes later. Customers don't use servers in data centers. This account was taken over in the credential-stuffing attack.
 </details>
 
-### Exercise 9: spot the poisoned address
-**Example (under the table):**
+### Exercise 11: spot the poisoned address
+**New: matching the start of a text.** `startswith` finds values that begin with something:
 ```kql
 Events
-| where user_id == "U00669"
-| project timestamp, event_type, address
+| where address startswith "0x2e2e"
+| project timestamp, user_id, event_type, address
 ```
 
-**Your question:** run it and compare the addresses of the 4 rows. What's strange about the last two?
+**Your question:** run it and compare the addresses. How many different addresses start with `0x2e2e`, and what's strange about them?
 
 <details><summary>Hint</summary>
 
@@ -291,14 +392,24 @@ Look at the first 6 and the last 4 characters of each address. Then look at the 
 </details>
 <details><summary>Answer</summary>
 
-The first two withdrawals go to `0x2e2ef17c...916a`. The last two rows use `0x2e2ee9a6...916a`. Same start (`0x2e2e`), same end (`916a`), different middle. The customer copied a look-alike address an attacker had planted in their history and sent 8,693.85 euro to it. That's **address poisoning**. You'll build detection AP-001 for this later.
+4 rows, all from `U00669`, with 2 different addresses. The first two withdrawals go to `0x2e2ef17c...916a`. The last two rows use `0x2e2ee9a6...916a`. Same start (`0x2e2e`), same end (`916a`), different middle. The customer copied a look-alike address an attacker had planted in their history and sent 8,693.85 euro to it. That's **address poisoning**. You'll build detection AP-001 for this later.
 </details>
 
 ---
 
 ## Day 4: your detection in KQL
 
-### Exercise 10: read the detection
+**Warm-up (from memory, in DB Browser):** write the SQL that shows which support agent opened accounts without a ticket.
+<details><summary>Answer</summary>
+
+```sql
+SELECT agent_id, COUNT(*) FROM events
+WHERE event_type = 'support_account_view' AND ticket_id IS NULL
+GROUP BY agent_id;
+```
+</details>
+
+### Exercise 12: read the detection
 This is the same detection as week 1, exercise 11, now in KQL. Paste it under the table:
 
 ```kql
@@ -315,9 +426,12 @@ Events
 **New in this query** (read this first):
 - A second `let`: `Added` is a small table with only the "new address" events. `added_time = timestamp` renames the column so you don't mix it up with the withdrawal's time.
 - The lines starting with spaces belong to the `let` above them. The spaces are only for reading.
-- `join kind=inner Added on user_id, address` sticks each withdrawal to the "new address" event with the same customer and the same address. `kind=inner` = only keep rows that have a match on both sides.
+- `join kind=inner Added on user_id, address` sticks each withdrawal to the "new address" event with the same customer and the same address. `kind=inner` = keep every row that has a match on both sides.
+- **Always write `kind=`.** Without it, KQL uses a different default (`innerunique`) that keeps only one row per key on the left side and can silently drop matches.
 - `60m` means 60 minutes. KQL also knows `h` (hours) and `d` (days).
 - `between (a .. b)` = from `a` up to and including `b`. Note the two dots.
+
+In a real Sentinel rule, the first step on `Events` would also be a time window like `| where timestamp > ago(1h)`. It's left out here because the practice data is from October and November 2026.
 
 **Reading questions** (answer them yourself first):
 1. What is in `Added`?
@@ -338,7 +452,7 @@ Events
 5: `U00005`, `U00918`, `U00226`, `U00287` and `U00669`. The same 5 as in SQL: 2 SIM-swap victims and 3 false alarms for this detection.
 </details>
 
-### Exercise 11: tune it
+### Exercise 13: a quick fix, and why it's a trap
 **New: filtering after a join.** You can add a `where` at any step. This keeps only withdrawals above 1000 euro:
 ```kql
 | where amount_eur > 1000
@@ -348,7 +462,7 @@ Events
 
 <details><summary>Hint</summary>
 
-Run the query without `distinct user_id` to see all columns. Compare `network`.
+Run the query without `distinct user_id` to see all columns. You'll also see `user_id1` and `address1`: the join copies the columns of `Added`, and KQL adds a `1` to names it already has. Compare `network`.
 </details>
 <details><summary>Answer</summary>
 
@@ -365,15 +479,137 @@ Events
 ```
 2 customers: `U00005` and `U00918`.
 </details>
-<details><summary>Think question: is "network == mobile" a good rule for a real SOC?</summary>
+<details><summary>Think question: why is this a trap?</summary>
 
-It works on this data, but an attacker on home internet or a VPN slips through. And many honest customers use their phone. A stronger rule combines signals: an SMS password reset and a 2FA change shortly before the new address. Write this down in the Blind spots section of the ATO-001 README. That's exactly the kind of thinking a SOC team wants to see.
+You picked a column that happens to split **this** data, by looking at the answers. That's called **overfitting**. An attacker on home internet or a VPN slips through, and many honest customers use their phone. A good rule describes the **attack**: an SMS password reset shortly before the new address. You build that next.
 </details>
 
-### Exercise 12: save it in your repo
-1. In File Explorer (Mac: Finder), go to the folder `detections/ATO-001-sim-swap-takeover`.
-2. Make a new file called `detection.kql`. On Windows: right-click → **New** → **Text Document**, and rename it to `detection.kql` (say **Yes** when Windows warns about the file extension). On Mac: open TextEdit, choose **Format → Make Plain Text**, and save it as `detection.kql`.
-3. Paste your tuned query from exercise 11 in it (without the practice table) and save.
-4. In the README of ATO-001, set KQL to **done** in the Implementations table.
+### Exercise 14: the strong rule
+**New: joining a third piece.** You can make another `let` and join it too. This one holds the SMS password resets:
+```kql
+let ResetSms = Events
+    | where event_type == "password_reset" and auth_method == "sms"
+    | project user_id, reset_time = timestamp;
+```
+To combine it, you join on `user_id` and check that the reset came at most 1 hour **before** the new address: `reset_time between (added_time - 1h .. added_time)`.
 
-Your detection now exists in two languages. Next week: Splunk.
+**Your question:** build the full rule: `Added`, `ResetSms`, the withdrawal within 60 minutes, and the reset within 1 hour before the new address. No `network` filter.
+
+<details><summary>Hint</summary>
+
+Put both `let` blocks above `Events`. After the first `join` and its `where`, add `| join kind=inner ResetSms on user_id` and then `| where reset_time between (added_time - 1h .. added_time)`.
+</details>
+<details><summary>Answer</summary>
+
+```kql
+let Added = Events
+    | where event_type == "withdrawal_address_added"
+    | project user_id, address, added_time = timestamp;
+let ResetSms = Events
+    | where event_type == "password_reset" and auth_method == "sms"
+    | project user_id, reset_time = timestamp;
+Events
+| where event_type == "withdrawal"
+| join kind=inner Added on user_id, address
+| where timestamp between (added_time .. added_time + 60m)
+| join kind=inner ResetSms on user_id
+| where reset_time between (added_time - 1h .. added_time)
+| distinct user_id
+```
+2 customers: `U00005` and `U00918`. Same result as exercise 13, but now because of **how the attack works**, not because of one lucky column. Write this reasoning in the Blind spots and False positives sections of the ATO-001 README.
+</details>
+
+### Exercise 15: save it, and update your SQL
+1. In the folder `detections/ATO-001-sim-swap-takeover`, make a new file `detection.kql`:
+   - **Windows:** right-click → **New** → **Text Document**, rename it to `detection.kql` and say **Yes** to the extension warning.
+   - **Mac:** open TextEdit, choose **Format → Make Plain Text**, and save it as `detection.kql`.
+2. Paste your strong rule from exercise 14 in it (without the practice table) and save.
+3. **Now in SQL (retrieval):** open `detection.sql` from week 1 and add the same idea: a third copy of `events`, called `r`, for the SMS reset. Run the test.
+
+<details><summary>Hint</summary>
+
+Add this between the existing `JOIN` and `WHERE`:
+```sql
+JOIN events r
+  ON r.user_id = a.user_id
+ AND r.event_type = 'password_reset'
+ AND r.auth_method = 'sms'
+```
+And add one more line to the `WHERE`:
+```sql
+  AND (julianday(a.timestamp) - julianday(r.timestamp)) * 24 * 60 BETWEEN 0 AND 60
+```
+</details>
+<details><summary>Answer</summary>
+
+```sql
+SELECT DISTINCT a.user_id AS entity
+FROM events a
+JOIN events w
+  ON w.user_id = a.user_id
+ AND w.address = a.address
+ AND w.event_type = 'withdrawal'
+JOIN events r
+  ON r.user_id = a.user_id
+ AND r.event_type = 'password_reset'
+ AND r.auth_method = 'sms'
+WHERE a.event_type = 'withdrawal_address_added'
+  AND (julianday(w.timestamp) - julianday(a.timestamp)) * 24 * 60 BETWEEN 0 AND 60
+  AND (julianday(a.timestamp) - julianday(r.timestamp)) * 24 * 60 BETWEEN 0 AND 60;
+```
+The test shows ATO-001 as **PASS**: caught 2, false alarms 0, missed 0. Set SQL and KQL to **done** in the README of ATO-001.
+</details>
+
+---
+
+## Day 5: on your own
+
+No examples, no hints. Only the [KQL cheat sheet](cheatsheet-kql.md).
+
+### Exercise 16: tornadoes
+**Your question:** which 3 states had the most `"Tornado"` events in `StormEvents`? Biggest first.
+
+<details><summary>Answer</summary>
+
+```kql
+StormEvents
+| where EventType == "Tornado"
+| summarize Total = count() by State
+| top 3 by Total
+```
+`TEXAS` 216, `KANSAS` 161 and `OKLAHOMA` 58.
+</details>
+
+### Exercise 17: busy withdrawers
+**Your question:** in the practice table (`Events`), which customers made more than 2 withdrawals?
+
+<details><summary>Answer</summary>
+
+```kql
+Events
+| where event_type == "withdrawal"
+| summarize Total = count() by user_id
+| where Total > 2
+```
+`U00226` with 4 and `U00669` with 3.
+
+Got every customer? You forgot `where Total > 2` after the `summarize`.
+</details>
+
+### Exercise 18: week 2 quiz
+Answer from memory first, then run to check.
+
+1. `StormEvents | where State == "texas" | count`
+2. `StormEvents | summarize Total = count() by State | sort by Total` : is the first row the biggest or the smallest?
+3. What goes wrong if you write `join` without `kind=`?
+4. Which one keeps all other columns: `extend` or `project`?
+
+<details><summary>Answers</summary>
+
+1. **0.** `==` is case-sensitive. Use `"TEXAS"` or `=~`.
+2. **The biggest.** KQL sorts biggest first by default, the opposite of SQL.
+3. KQL then uses `innerunique`, which can silently drop matches. Always write `kind=inner` (or another kind) yourself.
+4. **`extend`.** `project` keeps only what you name.
+</details>
+
+You can now say honestly: "I can write KQL with filters, time windows, aggregations, thresholds and joins, and I turned one detection into a tested rule in both SQL and KQL."
