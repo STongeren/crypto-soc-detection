@@ -4,3 +4,6 @@ data/events.csv
 data/events.jsonl
 data/exchange.db
 __pycache__/
+
+# DB Browser project files
+*.sqbpro
