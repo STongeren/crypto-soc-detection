@@ -13,7 +13,10 @@ Same rules as before: example first, then your question, hints and answers hidde
 1. **Python:** you installed it in week 1. Check: `python --version` (Mac: `python3 --version`).
 2. **An editor:** use [VS Code](https://code.visualstudio.com/download) (free, Windows and Mac). Notepad or TextEdit also works, but VS Code colors your code and shows mistakes.
 3. **Your data:** `data/events.jsonl` and `data/users.csv` must be in the `data` folder. Missing? Download [exchange-dataset.zip](https://github.com/STongeren/crypto-soc-detection/releases/latest/download/exchange-dataset.zip) and unzip it into `data`.
-4. **Where your scripts go:** make a folder `learning/week4/` inside the repo. Each exercise is a small file in there, like `ex1.py`.
+4. **Where your scripts go:** a folder `learning/week4/` inside the repo. Each exercise is a small file in there, like `ex1.py`.
+   - **VS Code (easiest):** File → Open Folder → pick the repo folder. In the file list on the left, right-click `learning` → New Folder → `week4`. Right-click `week4` → New File → `ex1.py`.
+   - **Notepad (Windows):** when saving, set "Save as type" to **All files**, otherwise you get `ex1.py.txt`.
+   - **TextEdit (Mac):** first choose **Format → Make Plain Text**, otherwise the file won't run.
 5. **How you run a script:** open a terminal in the repo folder (type `cd `, drag the repo folder into the window, press Enter), then:
    - **Windows:** `python learning\week4\ex1.py`
    - **Mac:** `python3 learning/week4/ex1.py`
@@ -56,6 +59,12 @@ You get 29450.
 
 **New: looking inside.** `events[0]` is the first event (Python counts from 0). `events[0]["user_id"]` is the value of its `user_id` key.
 
+To see every key an event has:
+```python
+print(events[0].keys())
+```
+You get `dict_keys(['event_id', 'timestamp', 'user_id', 'event_type', 'result', 'ip', 'country', 'network', 'device_id', 'user_agent', 'auth_method', 'amount_eur', 'asset', 'address', 'actor', 'agent_id', 'ticket_id'])`. Keep this list in mind: you'll use `ip` later this week.
+
 **Your question:** add one line that prints the `event_type` and the `user_id` of the first event.
 
 <details><summary>Hint</summary>
@@ -71,14 +80,14 @@ print(events[0]["event_type"], events[0]["user_id"])
 </details>
 
 ### Exercise 2: count per type
-**Example** (add to the bottom of `ex1.py`, or start `ex2.py` with the reading code from exercise 1):
+**Example** (in `ex1.py`: put the `from collections import Counter` line at the top, under `import json`, and the other two lines at the bottom):
 ```python
 from collections import Counter
 
 counts = Counter(e["event_type"] for e in events)
 print(counts.most_common(3))
 ```
-- `Counter` counts how often each value appears. Put the `from ... import` line at the top of your file.
+- `Counter` counts how often each value appears. `import` lines always go at the top of a file.
 - `e["event_type"] for e in events` means: for every event `e`, take its `event_type`.
 - `most_common(3)` gives the 3 most frequent, biggest first.
 
@@ -138,7 +147,7 @@ print(count)
 
 ## Day 2: time, grouping, your detection
 
-**Warm-up (from memory, in the KQL practice environment with the practice table):** count the events per `network`.
+**Warm-up (from memory, in the KQL practice environment):** paste [week2-events.kql](week2-events.kql) first, then count the events per `network` under it.
 <details><summary>Answer</summary>
 
 ```kql
@@ -203,6 +212,17 @@ print(len(per_user["U00005"]))
 
 1000: every customer appears at least once.
 </details>
+
+**New: sets and `in`.** A **set** is a collection where each value appears only once. You build one like a list, but with `{ }`:
+```python
+sms_users = {e["user_id"] for e in events if e["auth_method"] == "sms"}
+print(len(sms_users))
+print("U00005" in sms_users)
+```
+- `{... for e in events if ...}` collects the matching customers, each only once.
+- `x in my_set` is `True` when `x` is in it, otherwise `False`.
+
+You get 2 and `True`. Only two customers have an event where `auth_method` is exactly `"sms"`: the two victims. Normal logins say `"password+sms"`, which is a different value. `==` only matches the exact text.
 
 **Your question:** how many events does `U00918` have?
 
@@ -272,14 +292,14 @@ print(sorted(detect_ato(events)))
 
 <details><summary>Answer</summary>
 
-`[]`, nobody. In exercise 4 you found that the reset came 7 minutes before the new address. With a 5-minute window, `reset_before` is never true. A window that's too tight misses real attacks.
+`[]`, nobody. For both victims the reset came 7 minutes before the new address (`U00005`: 02:43 to 02:50, `U00918`: 03:30 to 03:37, which you measured in exercise 4). With a 5-minute window, `reset_before` is never true. A window that's too tight misses real attacks.
 </details>
 
 ---
 
 ## Day 3: add context and write the ticket
 
-**Warm-up (from memory, in DB Browser):** write the SQL that shows customers who never made a deposit (week 1, day 6), or, if you skipped day 6, the SQL that counts events per country with more than 2000 events.
+**Warm-up (from memory, in DB Browser):** write the SQL that counts the customers who never made a deposit (week 1, day 6), or, if you skipped day 6, the SQL that shows the countries with more than 2000 events.
 <details><summary>Answer</summary>
 
 ```sql
@@ -394,7 +414,7 @@ For example:
 Add it as one more line inside the f-string, before the closing `"""`. There's no single right text: it has to be the first useful action.
 </details>
 
-The `tickets` folder is your output, not part of your repo. You can add `tickets/` to `.gitignore`.
+The `tickets` folder is your output, not part of your repo. It's already in `.gitignore`, so Git ignores it.
 
 ---
 
@@ -414,7 +434,12 @@ StormEvents
 The test looks for a file `detection.py` in the detection folder, with a function called exactly `detect(events, users)` that returns the flagged customers. It reads the data itself and hands it to your function.
 
 1. Open `detections/ATO-001-sim-swap-takeover/detection.py`. It only has comment lines (`#`).
-2. Under the comments, paste your `to_time` function and your detection, renamed to `detect(events, users)`. You don't need the reading code: the test gives you `events` and `users`.
+2. Under the comments, paste your imports, your `to_time` function and your detection from exercise 6. Then change three things:
+   - Rename `def detect_ato(events, window=timedelta(minutes=60)):` to `def detect(events, users):`. The test always calls it like that.
+   - Add `window = timedelta(minutes=60)` as the **first line inside** the function, indented 4 spaces.
+   - Keep `return flagged` as the last line, indented 4 spaces. Delete the `print(...)` line.
+
+   You don't need the reading code: the test gives you `events` and `users`.
 3. Run the test (Windows: `python tests\run_detections.py`, Mac: `python3 tests/run_detections.py`).
 
 <details><summary>Hint</summary>
@@ -466,7 +491,11 @@ def detect(events, users):
 ```
 The test shows `ATO-001-sim-swap-takeover (python)` as **PASS**: caught 2, false alarms 0, missed 0. Your detection now exists in SQL, KQL and Python. Set Python to **done** in the ATO-001 README.
 
-Got `ERROR`? The message tells you what went wrong. `NameError` usually means a missing `import` or a typo in a name. `KeyError` means a key that doesn't exist, often a typo like `"event-type"`.
+Got `ERROR`? The message tells you what went wrong:
+- `NameError`: a missing `import` or a typo in a name.
+- `KeyError`: a key that doesn't exist, often a typo like `"event-type"`.
+- `TypeError: 'NoneType' object is not iterable`: your function has no `return flagged` at the end, so it returns nothing.
+- `IndentationError`: the spaces at the start of the lines don't line up.
 </details>
 
 ---
@@ -476,7 +505,14 @@ Got `ERROR`? The message tells you what went wrong. `NameError` usually means a 
 No examples, no hints. Use the [Python cheat sheet](cheatsheet-python.md) and your scripts from this week.
 
 ### Exercise 11: your third detection (CS-001)
+<details><summary>One hint, only if you're stuck for 10 minutes</summary>
+
+Step 1: count the failed logins per `e["ip"]` with `Counter`. Step 2: keep the IPs with 50 or more (`for ip, n in fails.items()` gives each IP with its count). Step 3: collect the customers with a successful login from one of those IPs.
+</details>
+
 Credential stuffing: one server tries leaked passwords on hundreds of accounts. Almost all fail, a few succeed.
+
+Everything you need is in this week: `Counter` (exercise 2), `e["ip"]` and `e["result"]` (exercise 1), a threshold like `n >= 50` (`>=` means "greater than or equal"), sets and `in` (exercise 5).
 
 **Your question:** in `detections/CS-001-credential-stuffing/detection.py`, write `detect(events, users)` that returns the customers who **successfully** logged in from an IP that had **50 or more failed logins**. Run the test.
 
@@ -503,7 +539,9 @@ Look at normal behaviour first: `print(fails.most_common(5))` shows that after t
 </details>
 
 ### Exercise 12: week 4 quiz
-Predict first, then run each line in Python to check.
+Predict first, then check each line in **interactive Python**: in a terminal type `python` (Mac: `python3`) and press Enter. You see `>>>`. Paste one line, press Enter, and Python answers right away. Leave with `exit()`.
+
+The `;` in line 1 puts two statements on one line.
 
 1. `from collections import Counter; print(Counter(["a", "b", "a"]).most_common(1))`
 2. `print(float("4653.0") + 1)`
@@ -542,6 +580,8 @@ print(round(9105.91 / price, 4), "BTC")
 ```
 - The `User-Agent` header tells the service who's asking. Many services refuse requests without one.
 - `timeout=15` stops waiting after 15 seconds.
+
+**Mac:** if you get `CERTIFICATE_VERIFY_FAILED`, open **Applications → Python 3.x** and double-click **Install Certificates.command** once. Then run it again.
 
 You get something like `{'bitcoin': {'eur': 55290}}`. The price changes all the time, so your numbers will differ.
 
