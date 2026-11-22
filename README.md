@@ -4,6 +4,10 @@ Detection engineering for a crypto exchange: account takeover, credential stuffi
 
 I'm a Cyber Security student (HvA, Netherlands) learning the tools that crypto-exchange SOC teams use. Every detection here follows the [Alerting and Detection Strategy](https://github.com/palantir/alerting-detection-strategy-framework) format, is tested automatically against labelled data, and gets built in five languages: SQL, KQL, SPL, Python and Sigma.
 
+## Follow along
+
+Want to learn this with me? **[Setup: everything you need](SETUP.md)** has the downloads for Windows, Mac and Linux. You only need two things to start: the dataset and DB Browser for SQLite. Then go to [week 1](learning/week1-sql.md).
+
 ## Detections
 
 | ID | What it catches | ATT&CK | SQL | KQL | SPL | Python | Sigma |
