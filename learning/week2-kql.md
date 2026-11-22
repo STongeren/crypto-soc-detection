@@ -2,7 +2,7 @@
 
 KQL (Kusto Query Language) is the language of Microsoft Sentinel, Microsoft Defender and Azure Data Explorer. Bitpanda's SOC Analyst job asks for it. It looks like SQL, but it reads top to bottom: you start with a table and pipe it through steps.
 
-Same rules as week 1: example first, then your question, hints and answers hidden, predict before you look. Keep the [KQL cheat sheet](cheatsheet-kql.md) open next to it.
+Same rules as week 1: example first, then your question, hints and answers hidden, predict before you look. Every query and answer below was tested in the free practice environment. Keep the [KQL cheat sheet](cheatsheet-kql.md) open next to it.
 
 ---
 
@@ -152,7 +152,7 @@ StormEvents
 | top 1 by DamageProperty
 | project StartTime, State, DamageProperty
 ```
-August 18, 2007, 5,000,000 dollars.
+August 18, 2007, 5,000,000 dollars. (Depending on your settings the date shows as `18/08/2007` or `8/18/2007`.)
 </details>
 
 ### Exercise 5: calculate a new column
