@@ -77,9 +77,9 @@ Download these when you get there.
 | Week | Skill | What you need | Windows | Mac | Linux |
 |---|---|---|---|---|---|
 | 2 | KQL | Nothing to install. A free Microsoft account. Start with [week 2](learning/week2-kql.md) | [Practice environment in your browser](https://dataexplorer.azure.com/clusters/help/databases/Samples) | same | same |
-| 3 | Splunk | Splunk Enterprise (free account, 60-day trial, then a free license that never expires) | [Download](https://www.splunk.com/en_us/download/splunk-enterprise.html) | same page, macOS tab | same page, Linux tab |
+| 3 | Splunk | Splunk Enterprise (free account, 60-day trial, then a free license that never expires). Start with [week 3](learning/week3-spl.md) | [Download](https://www.splunk.com/en_us/download/splunk-enterprise.html) | same page, macOS tab | same page, Linux tab |
 | 3 | Splunk | BOTSv3, a real attack dataset (320 MB) | [github.com/splunk/botsv3](https://github.com/splunk/botsv3) | same | same |
-| 4 | Python | Python (see above) | | | |
+| 4 | Python | Python (see above) and an editor like [VS Code](https://code.visualstudio.com/download). Start with [week 4](learning/week4-python.md) | | | |
 | 5 | Sigma | Nothing to install | [sigconverter.io](https://sigconverter.io) | same | same |
 | 6 | Cloud | A free AWS account and the AWS CLI | [AWS CLI](https://aws.amazon.com/cli/) | same page | same page |
 | 7 | EDR | Sysmon (Windows only) | [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) | | |
