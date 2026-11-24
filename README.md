@@ -1,5 +1,7 @@
 # crypto-soc-detection
 
+[![detections](https://github.com/STongeren/crypto-soc-detection/actions/workflows/detections.yml/badge.svg)](https://github.com/STongeren/crypto-soc-detection/actions/workflows/detections.yml)
+
 Detection engineering for a crypto exchange: account takeover, credential stuffing, insider access and address poisoning.
 
 I'm a Cyber Security student (HvA, Netherlands) learning the tools that crypto-exchange SOC teams use. Every detection here follows the [Alerting and Detection Strategy](https://github.com/palantir/alerting-detection-strategy-framework) format, is tested automatically against labelled data, and gets built in five languages: SQL, KQL, SPL, Python and Sigma.
